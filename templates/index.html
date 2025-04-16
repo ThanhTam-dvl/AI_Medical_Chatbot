@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediScan AI - Medical Image Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(-45deg, #134e5e, #1f4287, #071952, #3e0f64);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ripple:after {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform .5s, opacity 1s;
+        }
+        
+        .ripple:active:after {
+            transform: scale(0, 0);
+            opacity: .3;
+            transition: 0s;
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg text-gray-100 font-sans">
+    <!-- Logo Animation -->
+    <div id="logo-animation" class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50">
+        <div class="text-center">
+            <i class="fas fa-heartbeat text-6xl text-red-500 mb-4"></i>
+            <h1 class="text-5xl font-bold text-white">MediScan AI</h1>
+            <p class="text-xl text-gray-300 mt-2">Advanced Medical Image Analysis</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-10 max-w-6xl">
+        <div class="flex flex-col items-center justify-center mb-12">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-heartbeat text-5xl text-red-400 mr-4 pulse"></i>
+                <h1 class="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-purple-400">MediScan AI</h1>
+            </div>
+            <p class="text-xl text-center text-gray-300 max-w-3xl">Advanced medical image analysis powered by state-of-the-art AI models</p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <!-- Upload Image Card -->
+            <div class="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-xl border border-white/20 transition-all duration-300 card-hover">
+                <div class="flex items-center mb-6">
+                    <i class="fas fa-upload text-2xl text-cyan-400 mr-3"></i>
+                    <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-blue-400">Upload Medical Image</h2>
+                </div>
+                
+                <button id="upload-btn" class="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold rounded-xl transition-all duration-300 flex items-center justify-center ripple shadow-lg">
+                    <i class="fas fa-camera-retro mr-2"></i>
+                    <span>Select Image</span>
+                </button>
+                
+                <input type="file" id="image-upload" accept="image/*" class="hidden" />
+                
+                <div id="paste-area" class="mt-4 p-4 bg-gray-800/70 rounded-xl text-gray-400 text-center cursor-pointer border-2 border-dashed border-gray-500 hover:border-cyan-500 transition-all">
+                    Paste an image here (Ctrl+V)
+                </div>
+                
+                <div id="image-container" class="hidden mt-6">
+                    <div class="relative rounded-xl overflow-hidden shadow-2xl border-2 border-cyan-500/50">
+                        <img id="display-image" src="" alt="Uploaded medical image" class="w-full rounded-lg" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-2 text-center">Image uploaded successfully</p>
+                </div>
+            </div>
+
+            <!-- Ask Question Card -->
+            <div class="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-xl border border-white/20 transition-all duration-300 card-hover">
+                <div class="flex items-center mb-6">
+                    <i class="fas fa-comments text-2xl text-purple-400 mr-3"></i>
+                    <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-pink-400">Ask About The Image</h2>
+                </div>
+                
+                <textarea id="query-input" rows="4" placeholder="What would you like to know about this medical image? (e.g., 'What condition is shown in this X-ray?')"
+                    class="w-full p-4 bg-gray-800/70 text-gray-200 rounded-xl shadow-inner border border-white/10 focus:border-purple-500 focus:ring focus:ring-purple-500/30 transition-all"></textarea>
+                
+                <button id="submit-query" class="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-4 px-4 rounded-xl mt-4 transition-all duration-300 flex items-center justify-center ripple shadow-lg">
+                    <i class="fas fa-brain mr-2"></i>
+                    <span>Analyze Image</span>
+                </button>
+                
+                <div id="loading-indicator" class="hidden mt-4 flex justify-center">
+                    <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Analysis Results -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Model 1 Response -->
+            <div class="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-xl border border-white/20 transition-all duration-300 card-hover">
+                <div class="flex items-center mb-6">
+                    <i class="fas fa-robot text-2xl text-emerald-400 mr-3"></i>
+                    <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-300 to-green-400">Primary Analysis</h2>
+                    <span class="ml-3 px-3 py-1 text-xs bg-emerald-900/50 text-emerald-300 rounded-full">Llama-4-scout-17b</span>
+                </div>
+                
+                <div id="response-container-llama11b" class="hidden mt-4 bg-gray-800/50 p-6 rounded-xl text-gray-300 prose prose-invert max-w-none border border-emerald-500/20"></div>
+                
+                <div id="placeholder-llama" class="flex items-center justify-center h-40">
+                    <p class="text-gray-400 text-center">AI analysis will appear here after image processing</p>
+                </div>
+            </div>
+            
+            <!-- Model 2 Response -->
+            <div class="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-xl border border-white/20 transition-all duration-300 card-hover">
+                <div class="flex items-center mb-6">
+                    <i class="fas fa-microscope text-2xl text-amber-400 mr-3"></i>
+                    <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-orange-400">Advanced Analysis</h2>
+                    <span class="ml-3 px-3 py-1 text-xs bg-amber-900/50 text-amber-300 rounded-full">Llama-4-scout-16e</span>
+                </div>
+                
+                <div id="response-container-llama90b" class="hidden mt-4 bg-gray-800/50 p-6 rounded-xl text-gray-300 prose prose-invert max-w-none border border-amber-500/20"></div>
+                
+                <div id="placeholder-llava" class="flex items-center justify-center h-40">
+                    <p class="text-gray-400 text-center">AI analysis will appear here after image processing</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-container" class="hidden mt-8 p-6 bg-gradient-to-r from-red-600 to-red-800 text-white rounded-xl shadow-xl">
+            <div class="flex items-start">
+                <i class="fas fa-exclamation-triangle text-2xl mr-4"></i>
+                <div>
+                    <h3 class="font-bold text-xl mb-2">An Error Occurred</h3>
+                    <p id="error-text" class="text-gray-200"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Info Card -->
+        <div class="mt-12 p-6 bg-white/5 backdrop-blur-md rounded-xl border border-white/10">
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-blue-400 text-2xl mt-1 mr-4"></i>
+                <div>
+                    <h3 class="font-bold text-xl text-blue-300 mb-2">Important Information</h3>
+                    <p class="text-gray-300">MediScan AI is designed to assist healthcare professionals and should not replace professional medical advice. All analyses are for informational purposes only.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Logo animation
+            setTimeout(() => {
+                anime({
+                    targets: '#logo-animation',
+                    opacity: [1, 0],
+                    duration: 1000,
+                    easing: 'easeOutExpo',
+                    complete: function() {
+                        document.getElementById('logo-animation').style.display = 'none';
+                    }
+                });
+            }, 1500);
+            
+            // Elements
+            const uploadBtn = document.getElementById('upload-btn');
+            const imageUpload = document.getElementById('image-upload');
+            const pasteArea = document.getElementById('paste-area');
+            const displayImage = document.getElementById('display-image');
+            const imageContainer = document.getElementById('image-container');
+            const queryInput = document.getElementById('query-input');
+            const submitQuery = document.getElementById('submit-query');
+            const responseLlama = document.getElementById('response-container-llama11b');
+            const responseLlava = document.getElementById('response-container-llama90b');
+            const errorContainer = document.getElementById('error-container');
+            const errorText = document.getElementById('error-text');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const placeholderLlama = document.getElementById('placeholder-llama');
+            const placeholderLlava = document.getElementById('placeholder-llava');
+
+            // Click to Upload button trigger
+            uploadBtn.addEventListener('click', () => {
+                imageUpload.click();
+                
+                // Button animation
+                anime({
+                    targets: uploadBtn,
+                    scale: [1, 0.95, 1],
+                    duration: 300,
+                    easing: 'easeInOutQuad'
+                });
+            });
+
+            // Display uploaded image with animation
+            imageUpload.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        displayImage.src = e.target.result;
+                        imageContainer.classList.remove('hidden');
+                        
+                        // Animate image appearance
+                        anime({
+                            targets: '#image-container',
+                            opacity: [0, 1],
+                            translateY: [20, 0],
+                            duration: 800,
+                            easing: 'easeOutQuad'
+                        });
+                        
+                        // Update upload button text
+                        uploadBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i><span>Image Selected</span>';
+                        uploadBtn.classList.remove('from-cyan-500', 'to-blue-600');
+                        uploadBtn.classList.add('from-green-500', 'to-green-600');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Handle image paste
+            pasteArea.addEventListener('paste', (event) => {
+                const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+                for (const item of items) {
+                    if (item.type.indexOf('image') !== -1) {
+                        const blob = item.getAsFile();
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            displayImage.src = e.target.result;
+                            imageContainer.classList.remove('hidden');
+                            
+                            // Animate image appearance
+                            anime({
+                                targets: '#image-container',
+                                opacity: [0, 1],
+                                translateY: [20, 0],
+                                duration: 800,
+                                easing: 'easeOutQuad'
+                            });
+                            
+                            // Update upload button text
+                            uploadBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i><span>Image Pasted</span>';
+                            uploadBtn.classList.remove('from-cyan-500', 'to-blue-600');
+                            uploadBtn.classList.add('from-green-500', 'to-green-600');
+                            
+                            // Convert blob to file for form submission
+                            const file = new File([blob], 'pasted-image.png', { type: blob.type });
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            imageUpload.files = dataTransfer.files;
+                        };
+                        reader.readAsDataURL(blob);
+                    }
+                }
+            });
+
+            // Submit Query with animations
+            submitQuery.addEventListener('click', async () => {
+                const image = imageUpload.files[0];
+                const query = queryInput.value;
+
+                if (!image || !query) {
+                    showError('⚠️ Please upload or paste an image and enter your question about the image.');
+                    
+                    // Shake animation for error
+                    anime({
+                        targets: errorContainer,
+                        translateX: [0, -10, 10, -10, 10, 0],
+                        duration: 500,
+                        easing: 'easeInOutQuad'
+                    });
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('image', image);
+                formData.append('query', query);
+
+                try {
+                    submitQuery.disabled = true;
+                    
+                    // Show loading animation
+                    loadingIndicator.classList.remove('hidden');
+                    anime({
+                        targets: loadingIndicator,
+                        opacity: [0, 1],
+                        duration: 300,
+                        easing: 'easeOutQuad'
+                    });
+                    
+                    submitQuery.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Analyzing...</span>';
+                    placeholderLlama.classList.add('hidden');
+                    placeholderLlava.classList.add('hidden');
+
+                    // Backend API call
+                    const response = await fetch('/upload_and_query', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.detail || 'An error occurred while processing your request.');
+                    }
+
+                    responseLlama.innerHTML = marked.parse(result.llama);
+                    responseLlama.classList.remove('hidden');
+                    responseLlava.innerHTML = marked.parse(result.llava);
+                    responseLlava.classList.remove('hidden');
+                    
+                    // Fade in analysis results
+                    anime({
+                        targets: [responseLlama, responseLlava],
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        delay: anime.stagger(200),
+                        duration: 800,
+                        easing: 'easeOutQuad'
+                    });
+                    
+                    errorContainer.classList.add('hidden');
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError(error.message || 'An unexpected error occurred while analyzing the image.');
+                } finally {
+                    loadingIndicator.classList.add('hidden');
+                    submitQuery.disabled = false;
+                    submitQuery.innerHTML = '<i class="fas fa-brain mr-2"></i><span>Analyze Image</span>';
+                }
+            });
+
+            function showError(message) {
+                errorText.textContent = message;
+                errorContainer.classList.remove('hidden');
+                
+                // Fade in error message
+                anime({
+                    targets: errorContainer,
+                    opacity: [0, 1],
+                    translateY: [20, 0],
+                    duration: 500,
+                    easing: 'easeOutQuad'
+                });
+                
+                responseLlama.classList.add('hidden');
+                responseLlava.classList.add('hidden');
+            }
+            
+            // Add hover effects to cards
+            const cards = document.querySelectorAll('.card-hover');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    anime({
+                        targets: card,
+                        translateY: -5,
+                        boxShadow: '0 15px 30px rgba(0, 0, 0, 0.3)',
+                        duration: 300,
+                        easing: 'easeOutQuad'
+                    });
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    anime({
+                        targets: card,
+                        translateY: 0,
+                        boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1)',
+                        duration: 300,
+                        easing: 'easeOutQuad'
+                    });
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
